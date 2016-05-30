@@ -163,6 +163,21 @@ class CommentNodes:
 
         self.unfold() if is_folded(self.comments) else self.fold()
 
+    def current_comments(self):
+        new_sels = []
+        for s in reversed(self.view.sel()):
+            if s.empty():
+                for comment in self.comments:
+                    if comment.contains(s):
+                        new_sels.append(comment)
+        return new_sels
+
+    def fold_current(self):
+        self.view.fold(self.current_comments())
+
+    def unfold_current(self):
+        self.view.unfold(self.current_comments())
+
 
 # ================================= COMMANDS ==================================
 
@@ -185,6 +200,20 @@ class UnfoldCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         comments = CommentNodes(self.view)
         comments.unfold()
+
+
+class FoldCurrentCommentsCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit):
+        comments = CommentNodes(self.view)
+        comments.fold_current()
+
+
+class UnfoldCurrentCommentsCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit):
+        comments = CommentNodes(self.view)
+        comments.unfold_current()
 
 
 class FoldFileComments(sublime_plugin.EventListener):

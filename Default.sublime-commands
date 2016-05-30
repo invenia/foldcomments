@@ -10,5 +10,13 @@
     {
         "caption": "Toggle Fold Comments",
         "command": "toggle_fold_comments"
-    }
+    },
+    {
+        "caption": "Fold Current Comments",
+        "command": "fold_current_comments"
+    },
+    {
+        "caption": "Unfold Current Comments",
+        "command": "unfold_current_comments"
+    },
 ]
