@@ -185,3 +185,11 @@ class UnfoldCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         comments = CommentNodes(self.view)
         comments.unfold()
+
+
+class FoldFileComments(sublime_plugin.EventListener):
+
+    def on_load(self, view):
+        if load_settings("foldcomments.sublime-settings").get('autofold'):
+            comments = CommentNodes(view)
+            comments.fold()

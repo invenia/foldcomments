@@ -20,5 +20,8 @@
 	// function foobar(baz) {
 	// 	return baz * 2; // this is an inline comment <--
 	// }
-	"fold_single_line_comments": true
+	"fold_single_line_comments": true,
+
+	// Automatically fold comments when a file is loaded.
+	"autofold": false,
 }
