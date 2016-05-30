@@ -34,6 +34,13 @@ Unfold Current Comments: <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <
 * `Unfold Current Comments`
 
 
+#### Settings
+
+* `"fold_single_line_comments": true`  # Fold single line comments.
+* `"show_first_line": false`  # Show the first line of multiline comments.
+* `"autofold": false`  # Automatically fold comments when a file is loaded.
+
+
 ## Credits
 
 This plugin builds on the work of

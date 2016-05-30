@@ -1,12 +1,14 @@
-from sublime import Region, Settings, load_settings
+from sublime import Region, load_settings
 import sublime_plugin
+import re
 
 from itertools import tee, chain
 
 try:
     from itertools import izip as zip
-except ImportError: # will be 3.x series
+except ImportError:  # will be 3.x series
     pass
+
 
 def previous_and_current(iterable, *iterables):
     """
@@ -22,8 +24,10 @@ def previous_and_current(iterable, *iterables):
     prevs = chain([None], prevs)
     return zip(prevs, items, *iterables)
 
+
 def is_comment_multi_line(view, region):
     return len(view.lines(region)) > 1
+
 
 def normalize_comment(view, region):
     if is_comment_multi_line(view, region):
@@ -105,32 +109,45 @@ def normalize_multiline_comment(view, region):
 class CommentNodes:
 
     def __init__(self, view):
-        self.comments = None # collection of Region objects
         self.settings = load_settings("foldcomments.sublime-settings")
         self.view = view
-        self.find_comments()
-        self.apply_settings()
 
     def find_comments(self):
-        self.comments = [
-            normalize_comment(self.view, c) for c in self.view.find_by_selector('comment')
+        comments = self.find_comments_raw()
+        comments = self.apply_settings(comments)
+        comments = self.apply_filters(comments)
+        return comments
+
+    def find_comments_raw(self):
+        return [
+            normalize_comment(self.view, c) for c in
+            self.view.find_by_selector('comment')
         ]
 
-    def apply_settings(self):
-        if not self.settings.get('fold_single_line_comments'):
-            self.remove_single_line_comments()
-
+    def apply_settings(self, comments):
+        """Settings to apply before any processing"""
         if self.settings.get('concatenate_adjacent_comments'):
-            self.concatenate_adjacent_comments()
+            comments = self.concatenate_adjacent_comments(comments)
 
-    def remove_single_line_comments(self):
-        self.comments = [c for c in self.comments if is_comment_multi_line(self.view, c)]
+        return comments
 
-    def concatenate_adjacent_comments(self):
-        """
-        Merges any comments that are adjacent.
-        """
+    def apply_filters(self, comments):
+        """Filters to apply after processing"""
+        if not self.settings.get('fold_single_line_comments'):
+            comments = self.remove_single_line_comments(comments)
 
+        if self.settings.get('show_first_line'):
+            comments = self.show_first_line(comments)
+
+        return comments
+
+    def remove_single_line_comments(self, comments):
+        return [
+            c for c in comments if is_comment_multi_line(self.view, c)
+        ]
+
+    def concatenate_adjacent_comments(self, comments):
+        """Merge any comments that are adjacent."""
         def concatenate(region1, region2):
             return region1.cover(region2)
 
@@ -140,37 +157,71 @@ class CommentNodes:
 
         concatenated_comments = []
 
-        for prev_comment, comment in previous_and_current(self.comments):
+        for prev_comment, comment in previous_and_current(comments):
             concatenated_comment = None
 
             # prev wont be set on first iteration
             if prev_comment and is_adjacent(prev_comment, comment):
-                concatenated_comment = concatenate(concatenated_comments.pop(), comment)
+                concatenated_comment = concatenate(
+                    concatenated_comments.pop(), comment
+                )
 
             concatenated_comments.append(concatenated_comment or comment)
 
-        self.comments = concatenated_comments
+        return concatenated_comments
 
-    def fold(self):
-        self.view.fold(self.comments)
+    def show_first_line(self, comments):
+        """Leave the first line visible for multi line comments.
 
-    def unfold(self):
-        self.view.unfold(self.comments)
+        Show the first line of the comment seeing as we are going
+        to take up a line with (...) anyways.
+        """
+        # Regex of possible comment start characters.
+        regex = re.compile(r"[\s\'\"\\\ \(\)\{\}#/*%<>!-=]*")
+        new_fold = []
+        for c in comments:
+            if is_comment_multi_line(self.view, c):
+                lines = self.view.lines(c)
+                string = self.view.substr(lines[0])
+                # Check if there is anything in the first line.
+                if len(regex.match(string).group(0)) != len(string):
+                    new_fold.append(Region(lines[0].end(), lines[-1].end()))
+                else:
+                    # Nothing in first line show the second line.
+                    # Fold white space and comment characters at the
+                    # start of the next line.
+                    string = self.view.substr(lines[1])
+                    new_fold.append(Region(
+                        lines[0].end(),
+                        lines[1].begin() + len(regex.match(string).group(0)))
+                    )
+                    new_fold.append(Region(lines[1].end(), lines[-1].end()))
+            else:
+                # Only change multiline comments.
+                new_fold.append(c)
+
+        return new_fold
+
+    def fold_all(self):
+        self.view.fold(self.find_comments())
+
+    def unfold_all(self):
+        self.view.unfold(self.find_comments())
 
     def toggle_folding(self):
         def is_folded(comments):
             return self.view.unfold(comments[0])  # False if /already folded/
 
-        self.unfold() if is_folded(self.comments) else self.fold()
+        comments = self.find_comments()
+        self.unfold_all() if is_folded(comments) else self.fold_all()
 
     def current_comments(self):
-        new_sels = []
-        for s in reversed(self.view.sel()):
-            if s.empty():
-                for comment in self.comments:
-                    if comment.contains(s):
-                        new_sels.append(comment)
-        return new_sels
+        comments = self.apply_settings(self.find_comments_raw())
+        selected_comments = []
+        for sel in (s for s in self.view.sel() if s.empty()):
+            for comment in (c for c in comments if c.contains(sel)):
+                selected_comments.append(comment)
+        return self.apply_filters(selected_comments)
 
     def fold_current(self):
         self.view.fold(self.current_comments())
@@ -192,14 +243,14 @@ class FoldCommentsCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         comments = CommentNodes(self.view)
-        comments.fold()
+        comments.fold_all()
 
 
 class UnfoldCommentsCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         comments = CommentNodes(self.view)
-        comments.unfold()
+        comments.unfold_all()
 
 
 class FoldCurrentCommentsCommand(sublime_plugin.TextCommand):
@@ -221,4 +272,4 @@ class FoldFileComments(sublime_plugin.EventListener):
     def on_load(self, view):
         if load_settings("foldcomments.sublime-settings").get('autofold'):
             comments = CommentNodes(view)
-            comments.fold()
+            comments.fold_all()

@@ -22,6 +22,22 @@
 	// }
 	"fold_single_line_comments": true,
 
+	// Keep the first line visible when folding multiline comments.
+	//
+	// Example:
+	//
+	// # This is the first line.
+	// #
+	// # This is not the first line.
+	// # This is also not the first line.
+	//
+	// Would get turned into:
+	// # This is the first line. (...)
+	//
+	// Instead of:
+	// (...)
+	"show_first_line": false,
+
 	// Automatically fold comments when a file is loaded.
 	"autofold": false,
 }
