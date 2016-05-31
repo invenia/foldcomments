@@ -119,10 +119,16 @@ class CommentNodes:
         return comments
 
     def find_comments_raw(self):
-        return [
+        comments = [
             normalize_comment(self.view, c) for c in
             self.view.find_by_selector('comment')
         ]
+        if self.settings.get('fold_strings'):
+            comments += [
+                normalize_comment(self.view, c) for c in
+                self.view.find_by_selector('string')
+            ]
+        return comments
 
     def apply_settings(self, comments):
         """Settings to apply before any processing"""
@@ -177,7 +183,7 @@ class CommentNodes:
         to take up a line with (...) anyways.
         """
         # Regex of possible comment start characters.
-        regex = re.compile(r"[\s\'\"\\\ \(\)\{\}#/*%<>!-=]*")
+        regex = re.compile(r"\s*@?(doc)?[\s\'\"\\\ \(\)\{\}#/*%<>!-=]*")
         new_fold = []
         for c in comments:
             if is_comment_multi_line(self.view, c):

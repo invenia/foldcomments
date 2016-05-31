@@ -40,4 +40,9 @@
 
 	// Automatically fold comments when a file is loaded.
 	"autofold": false,
+
+	// Also fold strings.
+	//
+	// Strings are often used as comments.
+	"fold_strings": false
 }
