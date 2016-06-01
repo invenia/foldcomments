@@ -19,4 +19,8 @@
         "caption": "Unfold Current Comments",
         "command": "unfold_current_comments"
     },
+    {
+        "caption": "Toggle Fold Current Comments",
+        "command": "toggle_fold_current_comments"
+    },
 ]

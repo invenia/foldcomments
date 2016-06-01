@@ -15,21 +15,20 @@ You can install via [Sublime Package Manager](https://sublime.wbond.net/) where 
 #### Keybinds
 
 ###### OSX
-Toggle Comments Folding: <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
-Fold Current Comments: <kbd>Command</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd>
-Unfold Current Comments: <kbd>Command</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+Toggle Fold Comments: <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+Toggle Fold Current Comments: <kbd>Command</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd>
 
 ###### Windows/Linux
-Toggle Comments Folding: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
-Fold Current Comments: <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd>
-Unfold Current Comments: <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+Toggle Fold Comments: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+Toggle Fold Current Comments: <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd>
 
 
 #### Commands
 
-* `Toggle Folding Comments`
+* `Toggle Fold Comments`
 * `Fold Comments`
 * `Unfold Comments`
+* `Toggle Fold Current Comments`
 * `Fold Current Comments`
 * `Unfold Current Comments`
 

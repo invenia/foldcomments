@@ -1,5 +1,4 @@
 [
 	{ "keys": ["ctrl+shift+c"],  "command": "toggle_fold_comments" },
-	{ "keys": ["ctrl+alt+c"], "command": "fold_current_comments"},
-	{ "keys": ["ctrl+alt+shift+c"], "command": "unfold_current_comments"},
+	{ "keys": ["ctrl+alt+c"], "command": "toggle_fold_current_comments"},
 ]

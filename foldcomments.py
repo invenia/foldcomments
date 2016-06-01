@@ -214,12 +214,19 @@ class CommentNodes:
     def unfold_all(self):
         self.view.unfold(self.find_comments())
 
-    def toggle_folding(self):
-        def is_folded(comments):
-            return self.view.unfold(comments[0])  # False if /already folded/
+    def is_folded(self, comments):
+        return self.view.unfold(comments[0])  # False if /already folded/
 
+    def toggle_fold_all(self):
         comments = self.find_comments()
-        self.unfold_all() if is_folded(comments) else self.fold_all()
+        self.unfold_all() if self.is_folded(comments) else self.fold_all()
+
+    def toggle_fold_current(self):
+        comments = self.current_comments()
+        if self.is_folded(comments):
+            self.unfold_current()
+        else:
+            self.fold_current()
 
     def current_comments(self):
         comments = self.apply_settings(self.find_comments_raw())
@@ -242,7 +249,7 @@ class ToggleFoldCommentsCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         comments = CommentNodes(self.view)
-        comments.toggle_folding()
+        comments.toggle_fold_all()
 
 
 class FoldCommentsCommand(sublime_plugin.TextCommand):
@@ -257,6 +264,13 @@ class UnfoldCommentsCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         comments = CommentNodes(self.view)
         comments.unfold_all()
+
+
+class ToggleFoldCurrentCommentsCommand(sublime_plugin.TextCommand):
+
+    def run(self, edit):
+        comments = CommentNodes(self.view)
+        comments.toggle_fold_current()
 
 
 class FoldCurrentCommentsCommand(sublime_plugin.TextCommand):
