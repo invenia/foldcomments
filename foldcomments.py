@@ -142,6 +142,9 @@ class CommentNodes:
         if not self.settings.get('fold_single_line_comments'):
             comments = self.remove_single_line_comments(comments)
 
+        if self.settings.get('ignore_assigned'):
+            comments = self.remove_assigned(comments)
+
         if self.settings.get('show_first_line'):
             comments = self.show_first_line(comments)
 
@@ -175,6 +178,13 @@ class CommentNodes:
             concatenated_comments.append(concatenated_comment or comment)
 
         return concatenated_comments
+
+    def remove_assigned(self, comments):
+        regex = re.compile(r"[\s\w]*\=")
+        return [
+            c for c in comments if not regex.match(self.view.substr(
+                self.view.lines(c)[0]))
+        ]
 
     def show_first_line(self, comments):
         """Leave the first line visible for multi line comments.

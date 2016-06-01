@@ -44,5 +44,16 @@
 	// Also fold strings.
 	//
 	// Strings are often used as comments.
-	"fold_strings": false
+	"fold_strings": false,
+
+	// Ignore assigned.
+	//
+	// Only want to fold strings that are comments.
+	// If a string is assigned to a variable ignore it.
+	//
+	// Example:
+	//
+	// Test = """Hello
+	//    World!"""
+	"ignore_assigned":false,
 }
