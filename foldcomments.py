@@ -100,7 +100,7 @@ def normalize_multiline_comment(view, region):
     for the region - which seems to have the correct end
     point set.
     """
-    lines = view.lines(region)
+    lines = view.split_by_newlines(region)
     last_line = lines[-1]
     last_point = last_line.b
     return Region(region.a, last_point)
@@ -114,8 +114,9 @@ class CommentNodes:
 
     def find_comments(self):
         comments = self.find_comments_raw()
-        comments = self.apply_settings(comments)
+        comments = self.apply_pre_settings(comments)
         comments = self.apply_filters(comments)
+        comments = self.apply_post_settings(comments)
         return comments
 
     def find_comments_raw(self):
@@ -130,21 +131,25 @@ class CommentNodes:
             ]
         return comments
 
-    def apply_settings(self, comments):
-        """Settings to apply before any processing"""
+    def apply_pre_settings(self, comments):
+        """Settings to apply before any processing."""
         if self.settings.get('concatenate_adjacent_comments'):
             comments = self.concatenate_adjacent_comments(comments)
 
         return comments
 
     def apply_filters(self, comments):
-        """Filters to apply after processing"""
+        """Filters to apply when folding all."""
         if not self.settings.get('fold_single_line_comments'):
             comments = self.remove_single_line_comments(comments)
 
         if self.settings.get('ignore_assigned'):
             comments = self.remove_assigned(comments)
 
+        return comments
+
+    def apply_post_settings(self, comments):
+        """Settings to apply after processing."""
         if self.settings.get('show_first_line'):
             comments = self.show_first_line(comments)
 
@@ -197,7 +202,7 @@ class CommentNodes:
         new_fold = []
         for c in comments:
             if is_comment_multi_line(self.view, c):
-                lines = self.view.lines(c)
+                lines = self.view.split_by_newlines(c)
                 string = self.view.substr(lines[0])
                 # Check if there is anything in the first line.
                 if len(regex.match(string).group(0)) != len(string):
@@ -239,12 +244,12 @@ class CommentNodes:
             self.fold_current()
 
     def current_comments(self):
-        comments = self.apply_settings(self.find_comments_raw())
+        comments = self.apply_pre_settings(self.find_comments_raw())
         selected_comments = []
         for sel in (s for s in self.view.sel() if s.empty()):
             for comment in (c for c in comments if c.contains(sel)):
                 selected_comments.append(comment)
-        return self.apply_filters(selected_comments)
+        return self.apply_post_settings(selected_comments)
 
     def fold_current(self):
         self.view.fold(self.current_comments())
