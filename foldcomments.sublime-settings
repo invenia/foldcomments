@@ -1,5 +1,5 @@
 {
-	// Adjacent single- and block comments
+	// Adjacent single line comments
 	// get turned into a single fold
 	//
 	// Example:

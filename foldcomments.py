@@ -25,87 +25,6 @@ def previous_and_current(iterable, *iterables):
     return zip(prevs, items, *iterables)
 
 
-def is_comment_multi_line(view, region):
-    return len(view.lines(region)) > 1
-
-
-def normalize_comment(view, region):
-    if is_comment_multi_line(view, region):
-        return normalize_multiline_comment(view, region)
-    else:
-        return normalize_singleline_comment(view, region)
-
-
-def normalize_singleline_comment(view, region):
-    """
-    Since single line comments include the newline
-    if we don't explicitly make sure newline is kept
-    out of the fold indicator, it will munge together
-    with code. Example:
-
-    // This is an example comment
-    function foo() {
-
-    Becomes:
-
-    (..) function foo() {
-
-    When what we really want is to keep the fold
-    on it's own line, like so:
-
-    (..)
-    function foo() {
-    """
-    region_str = view.substr(region)
-    last_newline = region_str.rfind('\n')
-
-    if (last_newline == -1):
-        # Single-line block comments don't include
-        # their newline.
-        # /* foo bar baz */ <-- like this
-        return region
-    else:
-        return Region(region.begin(), region.begin() + last_newline)
-
-
-def normalize_multiline_comment(view, region):
-    """
-    This is needed since in some languages it seems
-    the boundaries for proper block-comments
-    and chained single-line comments differ. The
-    chaines single-line comments have the last point
-    ( .end() .b etc) of their region set to the subsequent line,
-    while the block comments have it set to the last char
-    of their last line.
-
-    Example where the @ char signifies
-    the last endpoint:
-
-    BLOCK COMMENT
-
-    /**
-     * This is an example comment
-     */@ <---
-    function foobar() {
-
-    MULTIPLE SINGLE COMMENTS
-
-    //
-    // This is an example comment
-    //
-    @function foobar() { <---
-
-    What we do to fix this is not to use the boundaries
-    for the regions, but instead use the last line
-    for the region - which seems to have the correct end
-    point set.
-    """
-    lines = view.split_by_newlines(region)
-    last_line = lines[-1]
-    last_point = last_line.b
-    return Region(region.a, last_point)
-
-
 class CommentNodes:
 
     def __init__(self, view):
@@ -121,15 +40,101 @@ class CommentNodes:
 
     def find_comments_raw(self):
         comments = [
-            normalize_comment(self.view, c) for c in
+            self.normalize(c) for c in
             self.view.find_by_selector('comment')
         ]
         if self.settings.get('fold_strings'):
             comments += [
-                normalize_comment(self.view, c) for c in
-                self.view.find_by_selector('string')
+                self.normalize(c) for c in
+                self.view.find_by_selector('string') if
+                self.is_multiline(c)  # Ignore single line strings.
             ]
         return comments
+
+    def is_multiline(self, region):
+        return len(self.view.lines(region)) > 1
+
+    def nothing_before(self, region):
+        return (
+            len(self.view.substr(self.view.lines(region)[0]).split()) ==
+            len(self.view.substr(
+                self.view.split_by_newlines(region)[0]
+            ).split())
+        )
+
+    def normalize(self, region):
+        if self.is_multiline(region):
+            return self.normalize_multiline(region)
+        else:
+            return self.normalize_singleline(region)
+
+    def normalize_singleline(self, region):
+        """
+        Since single line comments include the newline
+        if we don't explicitly make sure newline is kept
+        out of the fold indicator, it will munge together
+        with code. Example:
+
+        // This is an example comment
+        function foo() {
+
+        Becomes:
+
+        (..) function foo() {
+
+        When what we really want is to keep the fold
+        on it's own line, like so:
+
+        (..)
+        function foo() {
+        """
+        region_str = self.view.substr(region)
+        last_newline = region_str.rfind('\n')
+
+        if (last_newline == -1):
+            # Single-line block comments don't include
+            # their newline.
+            # /* foo bar baz */ <-- like this
+            return region
+        else:
+            return Region(region.begin(), region.begin() + last_newline)
+
+    def normalize_multiline(self, region):
+        """
+        This is needed since in some languages it seems
+        the boundaries for proper block-comments
+        and chained single-line comments differ. The
+        chaines single-line comments have the last point
+        ( .end() .b etc) of their region set to the subsequent line,
+        while the block comments have it set to the last char
+        of their last line.
+
+        Example where the @ char signifies
+        the last endpoint:
+
+        BLOCK COMMENT
+
+        /**
+         * This is an example comment
+         */@ <---
+        function foobar() {
+
+        MULTIPLE SINGLE COMMENTS
+
+        //
+        // This is an example comment
+        //
+        @function foobar() { <---
+
+        What we do to fix this is not to use the boundaries
+        for the regions, but instead use the last line
+        for the region - which seems to have the correct end
+        point set.
+        """
+        lines = self.view.split_by_newlines(region)
+        last_line = lines[-1]
+        last_point = last_line.b
+        return Region(region.a, last_point)
 
     def apply_pre_settings(self, comments):
         """Settings to apply before any processing."""
@@ -157,7 +162,7 @@ class CommentNodes:
 
     def remove_single_line_comments(self, comments):
         return [
-            c for c in comments if is_comment_multi_line(self.view, c)
+            c for c in comments if self.is_multiline(c)
         ]
 
     def concatenate_adjacent_comments(self, comments):
@@ -174,8 +179,13 @@ class CommentNodes:
         for prev_comment, comment in previous_and_current(comments):
             concatenated_comment = None
 
-            # prev wont be set on first iteration
-            if prev_comment and is_adjacent(prev_comment, comment):
+            # prev wont be set on first iteration.
+            # Only concatenate single line comments.
+            if prev_comment and \
+                    not self.is_multiline(prev_comment) and \
+                    not self.is_multiline(comment) and \
+                    self.nothing_before(prev_comment) and \
+                    is_adjacent(prev_comment, comment):
                 concatenated_comment = concatenate(
                     concatenated_comments.pop(), comment
                 )
@@ -185,9 +195,9 @@ class CommentNodes:
         return concatenated_comments
 
     def remove_assigned(self, comments):
-        regex = re.compile(r"[\s\w]*\=")
+        regex = re.compile(r"^\s*\w[\s\w]*\=")
         return [
-            c for c in comments if not regex.match(self.view.substr(
+            c for c in comments if not regex.search(self.view.substr(
                 self.view.lines(c)[0]))
         ]
 
@@ -198,25 +208,55 @@ class CommentNodes:
         to take up a line with (...) anyways.
         """
         # Regex of possible comment start characters.
-        regex = re.compile(r"\s*@?(doc)?[\s\'\"\\\ \(\)\{\}#/*%<>!-=]*")
+        string_regex = re.compile(r"^\s*\S*?([\'\"]+)\s*")
+        # https://en.wikipedia.org/wiki/Comparison_of_programming_languages_(syntax)#Comment_comparison
+        comment_regex = re.compile(
+            r"""
+            ^\s*
+            (
+                \"|\"{3}|\'|\'{3}|
+                //|\/\*|\*|\*\/|
+                \#|<\#|/\#|\#=|\|\#|\#\||
+                \(\*?|\{\*?|%\{|
+                %|%\{|--
+            )
+            \s*
+            """,
+            re.VERBOSE
+        )
+
         new_fold = []
         for c in comments:
-            if is_comment_multi_line(self.view, c):
+            if self.is_multiline(c):
                 lines = self.view.split_by_newlines(c)
                 string = self.view.substr(lines[0])
-                comment_start = regex.match(string).group(0)
+
+                match = string_regex.search(string)
+                if not match:
+                    match = comment_regex.search(string)
+
+                # Unable to match string or comment.
+                if not match:
+                    continue
+
                 # Check if there is anything in the first line.
-                if len(comment_start) != len(string):
+                if len(match.group(0)) != len(string):
                     begin = lines[0].end()
                 else:
                     # Nothing in first line show the second line.
                     # Fold white space and comment characters at the
                     # start of the next line.
                     string = self.view.substr(lines[1])
+                    next_match = comment_regex.search(string)
+                    if next_match:
+                        absorb = len(next_match.group(0))
+                    else:
+                        absorb = len(re.search(r"\s*", string).group(0))
+
                     new_fold.append(Region(
                         lines[0].end(),
-                        lines[1].begin() + len(regex.match(string).group(0)))
-                    )
+                        lines[1].begin() + absorb
+                    ))
                     if len(lines) == 2:
                         # If it is a 2 line comment then we are done.
                         continue
@@ -231,7 +271,7 @@ class CommentNodes:
                     #  * Example: /* is the reverse of */
                     #  */
                     string = self.view.substr(lines[-1])
-                    comment_end = comment_start.strip()[::-1]
+                    comment_end = match.group(1).strip()[::-1]
                     if string.endswith(comment_end):
                         end = end - len(comment_end)
 
