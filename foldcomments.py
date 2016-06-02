@@ -204,9 +204,10 @@ class CommentNodes:
             if is_comment_multi_line(self.view, c):
                 lines = self.view.split_by_newlines(c)
                 string = self.view.substr(lines[0])
+                comment_start = regex.match(string).group(0)
                 # Check if there is anything in the first line.
-                if len(regex.match(string).group(0)) != len(string):
-                    new_fold.append(Region(lines[0].end(), lines[-1].end()))
+                if len(comment_start) != len(string):
+                    begin = lines[0].end()
                 else:
                     # Nothing in first line show the second line.
                     # Fold white space and comment characters at the
@@ -216,7 +217,25 @@ class CommentNodes:
                         lines[0].end(),
                         lines[1].begin() + len(regex.match(string).group(0)))
                     )
-                    new_fold.append(Region(lines[1].end(), lines[-1].end()))
+                    if len(lines) == 2:
+                        # If it is a 2 line comment then we are done.
+                        continue
+                    begin = lines[1].end()
+
+                end = lines[-1].end()
+                if self.settings.get('show_closing_comment_characters'):
+                    # Check if the last line ends with the
+                    # comment start characters reversed.
+                    #
+                    # /*
+                    #  * Example: /* is the reverse of */
+                    #  */
+                    string = self.view.substr(lines[-1])
+                    comment_end = comment_start.strip()[::-1]
+                    if string.endswith(comment_end):
+                        end = end - len(comment_end)
+
+                new_fold.append(Region(begin, end))
             else:
                 # Only change multiline comments.
                 new_fold.append(c)

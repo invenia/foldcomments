@@ -38,6 +38,21 @@
 	// (...)
 	"show_first_line": false,
 
+	// Make show_first_line also show the closing comment characters.
+	//
+	// Example:
+	//
+	// /*
+	//  * Hello World!
+	//  */
+	//
+	// Would get turned into:
+	// /*(...)Hello World!(...)*/
+	//
+	// Instead of:
+	// /*(...)Hello World!(...)
+	"show_closing_comment_characters": true,
+
 	// Automatically fold comments when a file is loaded.
 	"autofold": false,
 
