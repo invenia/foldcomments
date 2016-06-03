@@ -20,7 +20,7 @@
 	// function foobar(baz) {
 	// 	return baz * 2; // this is an inline comment <--
 	// }
-	"fold_single_line_comments": true,
+	"fold_single_line_comments": false,
 
 	// Keep the first line visible when folding multiline comments.
 	//
@@ -36,7 +36,7 @@
 	//
 	// Instead of:
 	// (...)
-	"show_first_line": false,
+	"show_first_line": true,
 
 	// Make show_first_line also show the closing comment characters.
 	//
@@ -59,7 +59,7 @@
 	// Also fold strings.
 	//
 	// Strings are often used as comments.
-	"fold_strings": false,
+	"fold_strings": true,
 
 	// Ignore assigned.
 	//
