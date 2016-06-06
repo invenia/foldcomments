@@ -53,9 +53,6 @@
 	// /*(...)Hello World!(...)
 	"show_closing_comment_characters": true,
 
-	// Automatically fold comments when a file is loaded.
-	"autofold": false,
-
 	// Also fold strings.
 	//
 	// Strings are often used as comments.
@@ -71,4 +68,16 @@
 	// Test = """Hello
 	//    World!"""
 	"ignore_assigned":false,
+
+	// Automatically fold comments when a file is loaded.
+	"autofold": false,
+
+	// If autofold is true then automatically fold the following syntaxes.
+	//
+	// If syntaxes is empty then fold every syntax.
+	// If syntaxes is not empty only fold the stynaxes in syntaxes.
+	//
+	// Example: You only want to autofold python code.
+	// "syntaxes": ["Python",],
+	"syntaxes": [],
 }

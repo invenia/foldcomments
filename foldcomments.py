@@ -10,6 +10,21 @@ except ImportError:  # will be 3.x series
     pass
 
 
+SYNTAX_RE = re.compile(r'([^/]+)\.(?:tmLanguage|sublime-syntax)$')
+
+
+def get_syntax(view):
+    """Return the view's syntax."""
+    view_syntax = view.settings().get('syntax', '')
+
+    match = SYNTAX_RE.search(view_syntax)
+
+    if match:
+        view_syntax = match.group(1)
+
+    return view_syntax
+
+
 def previous_and_current(iterable, *iterables):
     """
     Includes the previous value of iterable in iteration
@@ -364,6 +379,17 @@ class UnfoldCurrentCommentsCommand(sublime_plugin.TextCommand):
 class FoldFileComments(sublime_plugin.EventListener):
 
     def on_load(self, view):
-        if load_settings("foldcomments.sublime-settings").get('autofold'):
-            comments = CommentNodes(view)
-            comments.fold_all()
+        settings = load_settings("foldcomments.sublime-settings")
+        if settings.get('autofold'):
+            syntaxes = settings.get('syntaxes')
+            view_syntax = get_syntax(view)
+            # If syntaxes is empty or view_syntax is in syntaxes
+            # then we want to autofold.
+            if not syntaxes or view_syntax in syntaxes:
+                comments = CommentNodes(view)
+                comments.fold_all()
+            else:
+                print(
+                    "foldcomments: Did not autofold: \"{}\" not in syntaxes."
+                    .format(view_syntax)
+                )
