@@ -185,25 +185,29 @@ class CommentNodes:
         def concatenate(region1, region2):
             return region1.cover(region2)
 
-        def is_adjacent(region1, region2):
+        def is_adjacent(region1, region2, over_empty=True):
             region_inbetween = Region(region1.end(), region2.begin())
-            return len(self.view.substr(region_inbetween).strip()) == 0
+            str_inbetween = self.view.substr(region_inbetween)
+            if not over_empty and str_inbetween.count('\n') >= 2:
+                return False
+            else:
+                return len(str_inbetween.strip()) == 0
 
+        cat_multi = self.settings.get('concatenate_multiline_comments')
+        over_empty = self.settings.get('concatenate_over_empty_lines')
         concatenated_comments = []
 
         for prev_comment, comment in previous_and_current(comments):
             concatenated_comment = None
-
             # prev wont be set on first iteration.
-            # Only concatenate single line comments.
-            if prev_comment and \
-                    not self.is_multiline(prev_comment) and \
-                    not self.is_multiline(comment) and \
-                    self.nothing_before(prev_comment) and \
-                    is_adjacent(prev_comment, comment):
-                concatenated_comment = concatenate(
-                    concatenated_comments.pop(), comment
-                )
+            if prev_comment:
+                if cat_multi or not self.is_multiline(prev_comment) and \
+                        not self.is_multiline(comment):
+                    if self.nothing_before(prev_comment) and is_adjacent(
+                            prev_comment, comment, over_empty=over_empty):
+                        concatenated_comment = concatenate(
+                            concatenated_comments.pop(), comment
+                        )
 
             concatenated_comments.append(concatenated_comment or comment)
 

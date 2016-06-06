@@ -15,6 +15,27 @@
 	// (..)
 	"concatenate_adjacent_comments": true,
 
+	// Should multiline comments be concatenated.
+	//
+	// If concatenate_adjacent_comments is true and
+	// concatenate_multiline_comments is true then
+	// all adjacent comments will be concatenated.
+	//
+	// If false then multiline comments will not be concatenated.
+	"concatenate_multiline_comments": false,
+
+	// Should we concatenate over empty lines.
+	//
+	// If true then comments with an empty line in between them are
+	// considered as adjacent.
+	//
+	// Example:
+	//
+	// # These 2 comments are adjacent when true.
+	//
+	// # These 2 comments are not adjacent when false.
+	"concatenate_over_empty_lines": true,
+
 	// Includes "inline" comments, like so:
 	//
 	// function foobar(baz) {

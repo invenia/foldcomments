@@ -3,11 +3,14 @@
 
 # Settings for matching expected results:
 # {
-#    "concatenate_adjacent_comments": false,
+#    "concatenate_adjacent_comments": true,
+#    "concatenate_multiline_comments": false,
+#    "concatenate_over_empty_lines": true,
 #    "fold_single_line_comments": false,
 #    "show_first_line": true,
-#    "autofold": true | false,
+#    "show_closing_comment_characters": true,
 #    "fold_strings": true,
+#    "ignore_assigned":false,
 # }
 
 # For each test the section before the "pass" keyword is what is too be
@@ -19,12 +22,10 @@ def comment_test1():
     # Comments that are not inline and occur right next to
     # each other should be combined into one.
 
-    # Standalone lines should not be combined
+    # Standalone lines are combined if concatenate_over_empty_lines is true.
 
     pass
     # Comments that are not inline and occur right next to ...
-
-    # Standalone lines should not be combined
 
 
 def comment_test2():
@@ -36,6 +37,14 @@ def comment_test2():
     pass
     """ ... A docstring ... """
     # Comment adjacent to docstring
+
+
+def comment_test2():
+    """A docstring"""
+    # Because these are both singline comments the get combined together.
+
+    pass
+    #"""A docstring ...
 
 
 def comment_test3():
@@ -55,12 +64,12 @@ def comment_test3():
 
 def string_test1():
     var = (
-        "only triple quoted strings "
+        "only triple quoted multiline strings "
         "should be folded"
     )
     pass
     var = (
-        "only triple quoted strings "
+        "only triple quoted multiline strings "
         "should be folded"
     )
 
@@ -77,7 +86,23 @@ def string_test2():
 def string_test3():
     var = """
         triple quoted string used in an assignment
-        shouldn't be auto folded
+        shouldn't be auto folded when ignore_assigned
+        is true.
         """
     pass
     var = """ ... triple quoted string used in an assignment ... """
+
+
+def string_test4():
+    regex = re.compile(
+        r"""
+        hello\s*
+        world\n
+        """,
+        re.VERBOSE | re.IGNORECASE,
+    )
+    pass
+    regex = re.compile(
+        r"""...hello\s*...""",
+        re.VERBOSE | re.IGNORECASE,
+    )
