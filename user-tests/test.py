@@ -5,12 +5,12 @@
 # {
 #    "concatenate_adjacent_comments": true,
 #    "concatenate_multiline_comments": false,
-#    "concatenate_over_empty_lines": true,
+#    "concatenate_over_empty_lines": false,
 #    "fold_single_line_comments": false,
 #    "show_first_line": true,
 #    "show_closing_comment_characters": true,
 #    "fold_strings": true,
-#    "ignore_assigned":false,
+#    "ignore_assigned": false
 # }
 
 # For each test the section before the "pass" keyword is what is too be
@@ -27,8 +27,20 @@ def comment_test1():
     pass
     # Comments that are not inline and occur right next to ...
 
+    # Standalone lines are combined if concatenate_over_empty_lines is true.
+
 
 def comment_test2():
+    # Comments that are not inline and occur right next to
+    # each other should be combined into one.
+    #
+    # Not a standalone line
+
+    pass
+    # Comments that are not inline and occur right next to ...
+
+
+def comment_test3():
     """
     A docstring
     """
@@ -39,15 +51,15 @@ def comment_test2():
     # Comment adjacent to docstring
 
 
-def comment_test2():
+def comment_test4():
     """A docstring"""
     # Because these are both singline comments the get combined together.
 
     pass
-    #"""A docstring ...
+    """A docstring""" ...
 
 
-def comment_test3():
+def comment_test5():
     var = []  # inline comment
 
     # Comment referring loop below which shouldn't be combined
@@ -103,6 +115,6 @@ def string_test4():
     )
     pass
     regex = re.compile(
-        r"""...hello\s*...""",
+        r""" ... hello\s* ... """,
         re.VERBOSE | re.IGNORECASE,
     )
