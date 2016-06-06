@@ -3,11 +3,12 @@
 
 # Settings for matching expected results:
 # {
-#    "concatenate_adjacent_comments": false,
+#    "concatenate_adjacent_comments": true,
 #    "fold_single_line_comments": false,
 #    "show_first_line": true,
 #    "autofold": true | false,
 #    "fold_strings": true,
+#    "ignore_assigned": false
 # }
 
 # For each test the section before the "pass" keyword is what is too be
@@ -28,6 +29,16 @@ def comment_test1():
 
 
 def comment_test2():
+    # Comments that are not inline and occur right next to
+    # each other should be combined into one.
+    #
+    # Not a standalone line
+
+    pass
+    # Comments that are not inline and occur right next to ...
+
+
+def comment_test3():
     """
     A docstring
     """
@@ -38,7 +49,15 @@ def comment_test2():
     # Comment adjacent to docstring
 
 
-def comment_test3():
+def comment_test4():
+    """A docstring"""
+    # Comment adjacent to docstring
+
+    pass
+    """A docstring""" ...
+
+
+def comment_test5():
     var = []  # inline comment
 
     # Comment referring loop below which shouldn't be combined
